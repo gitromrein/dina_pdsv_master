@@ -1,0 +1,32 @@
+#ifndef INIT_H
+#define	INIT_H
+
+#include <stdint.h>
+#include "RamTest.h"
+#include "RomTest.h"
+#include "Frequenz.h"
+#include "Uart.h"
+
+void init(void);
+extern uint16_t Steckplatz;
+//extern uint8_t SerTX[];
+extern uint16_t cntLedAlternativ;
+extern volatile uint8_t Param[64];
+extern volatile uint8_t DNCO[256];
+extern ParamStruct PS;
+
+//extern uint16_t RamZelleBackup, RamBackup, idxPattern, RamZelleBackupINV, RamBackupINV;
+//extern uint16_t *ptrRamZelle, *ptrRam;
+extern uint16_t __attribute__((address(0x1000))) RamZelleBackup;
+extern uint16_t __attribute__((address(0x1002))) RamBackup;
+extern uint16_t __attribute__((address(0x1004))) idxPattern;
+extern uint16_t __attribute__((address(0x1006))) RamZelleBackupINV;
+extern uint16_t __attribute__((address(0x1008))) RamBackupINV;
+extern uint16_t __attribute__((address(0x100A))) *ptrRamZelle;
+extern uint16_t __attribute__((address(0x100C))) *ptrRam;
+extern uint16_t __attribute__((address(0x100E))) dummy;
+extern uint16_t OffsetRom;
+extern str_ipk RX, TX;
+
+#endif	/* INIT_H */
+
