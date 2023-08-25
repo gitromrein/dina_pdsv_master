@@ -1,0 +1,126 @@
+name: Build
+on: [push]
+
+jobs:
+  build_Windows:
+    name: Build project Windows
+    runs-on: windows-latest
+    steps:
+      - name: Download the source code
+        uses: actions/checkout@v1
+      - name: Download and set up XC16
+        env:
+          XC16_DOWNLOAD_URL: https://ww1.microchip.com/downloads/en/DeviceDoc/xc16-v1.70-full-install-windows64-installer.exe
+        run: |
+          mkdir -p ${{ github.workspace }}/XC16
+          mkdir -p ${{ github.workspace }}/XC16/v170
+          curl -sSLo ${{ github.workspace }}/XC16/xc16-installer.exe ${{ env.XC16_DOWNLOAD_URL }}     
+      - shell: cmd
+        run: ${{ github.workspace }}/XC16/xc16-installer.exe --help
+      - shell: cmd
+        run: ${{ github.workspace }}/XC16/xc16-installer.exe --mode unattended --unattendedmodeui none --netservername localhost --LicenseType FreeMode --prefix "C:\Program Files\Microchip\xc16\v1.70"
+      - shell: bash
+        run: echo "C:\Program Files\Microchip\xc16\v1.70\bin" >> $GITHUB_PATH
+      - name: LS dir 4
+        run: echo %PATH%
+      - shell: cmd
+        run: echo %PATH%
+      - name: LS dir 4
+        run: ls "C:\Program Files\Microchip"
+      - name: LS dir 4
+        run: ls "C:\Program Files\Microchip\xc16"
+      - name: LS dir 4
+        run: ls "C:\Program Files\Microchip\xc16\v1.70"
+      - name: LS dir 4
+        run: ls "C:\Program Files\Microchip\xc16\v1.70\bin"
+      - name: cmd  
+        run: xc16-gcc.exe -v
+      - shell: cmd
+        run: del ${{ github.workspace }}\firmware.x\dist\default\production\pdsv-v1.10.production.hex
+      - shell: cmd
+        run: del ${{ github.workspace }}\XC16\xc16-installer.exe
+      - name: LS dir 4
+        run: ls ${{ github.workspace }}\firmware.x\dist\default\production\
+      - shell: cmd
+        run: xc16-gcc.exe -o ${{ github.workspace }}/firmware.x/dist/default/production/firmware.x.production.elf  ${{ github.workspace }}/firmware.x/build/default/production/Interrupts.o ${{ github.workspace }}/firmware.x/build/default/production/LedAnzeige.o ${{ github.workspace }}/firmware.x/build/default/production/SpiConfig.o ${{ github.workspace }}/firmware.x/build/default/production/errorloop.o ${{ github.workspace }}/firmware.x/build/default/production/getSteckplatz.o ${{ github.workspace }}/firmware.x/build/default/production/init.o ${{ github.workspace }}/firmware.x/build/default/production/main.o ${{ github.workspace }}/firmware.x/build/default/production/timing.o ${{ github.workspace }}/firmware.x/build/default/production/Uart.o ${{ github.workspace }}/firmware.x/build/default/production/Eingaegne.o ${{ github.workspace }}/firmware.x/build/default/production/SKR_ZwHd.o ${{ github.workspace }}/firmware.x/build/default/production/GetErrors.o ${{ github.workspace }}/firmware.x/build/default/production/ADC.o ${{ github.workspace }}/firmware.x/build/default/production/Diagnose.o ${{ github.workspace }}/firmware.x/build/default/production/Can.o ${{ github.workspace }}/firmware.x/build/default/production/PortTest.o ${{ github.workspace }}/firmware.x/build/default/production/RamTest.o ${{ github.workspace }}/firmware.x/build/default/production/RomTest.o ${{ github.workspace }}/firmware.x/build/default/production/CCPconfig.o ${{ github.workspace }}/firmware.x/build/default/production/Frequenz.o ${{ github.workspace }}/firmware.x/build/default/production/FrequenzVergleich.o ${{ github.workspace }}/firmware.x/build/default/production/Auswertung.o ${{ github.workspace }}/firmware.x/build/default/production/CRC16.o      -mcpu=33CK256MP505        -omf=elf -DXPRJ_default=default  -no-legacy-libc    -Wl,--local-stack,,--defsym=__MPLAB_BUILD=1,,--script=p33CK256MP505.gld,--stack=16,--check-sections,--data-init,--pack-data,--no-handles,--isr,--no-gc-sections,--fill-upper=0,--stackguard=16,--no-force-link,--smart-io,-Map="${{ github.workspace }}/firmware.x/dist/default/production/firmware.x.production.map",--report-mem,--memorysummary,${{ github.workspace }}/firmware.x/dist/default/production/memoryfile.xml
+      - name: XC16 HEX
+        run: xc16-bin2hex ${{ github.workspace }}/firmware.x/dist/default/production/firmware.x.production.elf -a  -omf=elf
+      - name: LS dir 4
+        run: ls ${{ github.workspace }}\firmware.x\dist\default\production\
+  build_Linux:
+    name: Build project Linux
+    runs-on: ubuntu-latest
+    env:
+      BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
+      SONAR_SCANNER_VERSION: 4.8.0.2856
+      SONAR_SERVER_URL: "https://sonarcloud.io"
+    steps:
+      - name: Download the source code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Download and set up XC16
+        env:
+          XC16_DOWNLOAD_URL_L: https://ww1.microchip.com/downloads/en/DeviceDoc/xc16-v1.70-full-install-linux64-installer.run
+        run: sudo wget -nv -O /tmp/xc16.run http://ww1.microchip.com/downloads/en/DeviceDoc/xc16-v1.70-full-install-linux64-installer.run
+      - name: Install xc16
+        run: sudo chmod a+x /tmp/xc16.run
+      - name: Install xc16c   
+        run: sudo /tmp/xc16.run --mode unattended --unattendedmodeui none --netservername localhost --LicenseType FreeMode --prefix $HOME/opt/microchip/xc16/v1.70  
+      - name: Remove temp xc16
+        run: sudo rm /tmp/xc16.run
+      - name: ls github.home
+        run: ls $HOME
+      - name: Add to PATH
+        run: echo "$HOME/opt/microchip/xc16/v1.70/bin" >> $GITHUB_PATH
+      - name: ENVi1
+        run: env
+      - name: ls github.home.opt
+        run: ls $HOME/opt/microchip/xc16/v1.70/bin
+      - name: XC16 Linux
+        run: xc16-gcc --help
+      - shell: sh
+        run: ls firmware.x
+      - shell: sh
+        run: ls ${{ github.workspace }}/firmware.x/dist/default/production/
+      - shell: sh
+        run: ls ${{ github.workspace }}/firmware.x/build/default/production
+      - shell: sh
+        run: ls ${{ github.workspace }}/firmware.x/nbproject
+      - shell: sh
+        run: rm ${{ github.workspace }}/firmware.x/dist/default/production/pdsv-v1.10.production.hex
+      - shell: sh
+        run: ls ${{ github.workspace }}/firmware.x/dist/default/production/ 
+      - name: XC16 Build
+        run: xc16-gcc   -o ${{ github.workspace }}/firmware.x/dist/default/production/firmware.x.production.elf  ${{ github.workspace }}/firmware.x/build/default/production/Interrupts.o ${{ github.workspace }}/firmware.x/build/default/production/LedAnzeige.o ${{ github.workspace }}/firmware.x/build/default/production/SpiConfig.o ${{ github.workspace }}/firmware.x/build/default/production/errorloop.o ${{ github.workspace }}/firmware.x/build/default/production/getSteckplatz.o ${{ github.workspace }}/firmware.x/build/default/production/init.o ${{ github.workspace }}/firmware.x/build/default/production/main.o ${{ github.workspace }}/firmware.x/build/default/production/timing.o ${{ github.workspace }}/firmware.x/build/default/production/Uart.o ${{ github.workspace }}/firmware.x/build/default/production/Eingaegne.o ${{ github.workspace }}/firmware.x/build/default/production/SKR_ZwHd.o ${{ github.workspace }}/firmware.x/build/default/production/GetErrors.o ${{ github.workspace }}/firmware.x/build/default/production/ADC.o ${{ github.workspace }}/firmware.x/build/default/production/Diagnose.o ${{ github.workspace }}/firmware.x/build/default/production/Can.o ${{ github.workspace }}/firmware.x/build/default/production/PortTest.o ${{ github.workspace }}/firmware.x/build/default/production/RamTest.o ${{ github.workspace }}/firmware.x/build/default/production/RomTest.o ${{ github.workspace }}/firmware.x/build/default/production/CCPconfig.o ${{ github.workspace }}/firmware.x/build/default/production/Frequenz.o ${{ github.workspace }}/firmware.x/build/default/production/FrequenzVergleich.o ${{ github.workspace }}/firmware.x/build/default/production/Auswertung.o ${{ github.workspace }}/firmware.x/build/default/production/CRC16.o      -mcpu=33CK256MP505        -omf=elf -DXPRJ_default=default  -no-legacy-libc    -Wl,--local-stack,,--defsym=__MPLAB_BUILD=1,,--script=p33CK256MP505.gld,--stack=16,--check-sections,--data-init,--pack-data,--no-handles,--isr,--no-gc-sections,--fill-upper=0,--stackguard=16,--no-force-link,--smart-io,-Map="${{ github.workspace }}/firmware.x/dist/default/production/firmware.x.production.map",--report-mem,--memorysummary,${{ github.workspace }}/firmware.x/dist/default/production/memoryfile.xml
+      - name: XC16 HEX
+        run: xc16-bin2hex ${{ github.workspace }}/firmware.x/dist/default/production/firmware.x.production.elf -a  -omf=elf
+      - shell: sh
+        run: ls ${{ github.workspace }}/firmware.x/dist/default/production/
+      - name: Install sonar-scanner and build-wrapper
+        uses: SonarSource/sonarcloud-github-c-cpp@v1
+      - name: Download and set up sonar-scanner
+        env:
+          SONAR_SCANNER_DOWNLOAD_URL: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${{ env.SONAR_SCANNER_VERSION }}-linux.zip
+        run: |
+          mkdir -p $HOME/.sonar
+          curl -sSLo $HOME/.sonar/sonar-scanner.zip ${{ env.SONAR_SCANNER_DOWNLOAD_URL }} 
+          unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
+          echo "$HOME/.sonar/sonar-scanner-${{ env.SONAR_SCANNER_VERSION }}-linux/bin" >> $GITHUB_PATH
+      - name: Download and set up build-wrapper
+        env:
+          BUILD_WRAPPER_DOWNLOAD_URL: ${{ env.SONAR_SERVER_URL }}/static/cpp/build-wrapper-linux-x86.zip
+        run: |
+          curl -sSLo $HOME/.sonar/build-wrapper-linux-x86.zip ${{ env.BUILD_WRAPPER_DOWNLOAD_URL }}
+          unzip -o $HOME/.sonar/build-wrapper-linux-x86.zip -d $HOME/.sonar/
+          echo "$HOME/.sonar/build-wrapper-linux-x86" >> $GITHUB_PATH
+      - name: Run build-wrapper
+        run: |
+          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} xc16-gcc -o ${{ github.workspace }}/firmware.x/dist/default/production/firmware.x.production.elf  ${{ github.workspace }}/firmware.x/build/default/production/Interrupts.o ${{ github.workspace }}/firmware.x/build/default/production/LedAnzeige.o ${{ github.workspace }}/firmware.x/build/default/production/SpiConfig.o ${{ github.workspace }}/firmware.x/build/default/production/errorloop.o ${{ github.workspace }}/firmware.x/build/default/production/getSteckplatz.o ${{ github.workspace }}/firmware.x/build/default/production/init.o ${{ github.workspace }}/firmware.x/build/default/production/main.o ${{ github.workspace }}/firmware.x/build/default/production/timing.o ${{ github.workspace }}/firmware.x/build/default/production/Uart.o ${{ github.workspace }}/firmware.x/build/default/production/Eingaegne.o ${{ github.workspace }}/firmware.x/build/default/production/SKR_ZwHd.o ${{ github.workspace }}/firmware.x/build/default/production/GetErrors.o ${{ github.workspace }}/firmware.x/build/default/production/ADC.o ${{ github.workspace }}/firmware.x/build/default/production/Diagnose.o ${{ github.workspace }}/firmware.x/build/default/production/Can.o ${{ github.workspace }}/firmware.x/build/default/production/PortTest.o ${{ github.workspace }}/firmware.x/build/default/production/RamTest.o ${{ github.workspace }}/firmware.x/build/default/production/RomTest.o ${{ github.workspace }}/firmware.x/build/default/production/CCPconfig.o ${{ github.workspace }}/firmware.x/build/default/production/Frequenz.o ${{ github.workspace }}/firmware.x/build/default/production/FrequenzVergleich.o ${{ github.workspace }}/firmware.x/build/default/production/Auswertung.o ${{ github.workspace }}/firmware.x/build/default/production/CRC16.o      -mcpu=33CK256MP505        -omf=elf -DXPRJ_default=default  -no-legacy-libc    -Wl,--local-stack,,--defsym=__MPLAB_BUILD=1,,--script=p33CK256MP505.gld,--stack=16,--check-sections,--data-init,--pack-data,--no-handles,--isr,--no-gc-sections,--fill-upper=0,--stackguard=16,--no-force-link,--smart-io,-Map="${{ github.workspace }}/firmware.x/dist/default/production/firmware.x.production.map",--report-mem,--memorysummary,${{ github.workspace }}/firmware.x/dist/default/production/memoryfile.xml
+      - name: Run sonar-scanner
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          sonar-scanner --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}" -X
+  
